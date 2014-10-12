@@ -1,4 +1,4 @@
-s8_IP
+s8_ip
 =====
 
 The image processing Part.
