@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>s8_IP</name>
+  <name>s8_ip</name>
   <version>0.0.0</version>
   <description>Robotics image processing package</description>
   <maintainer email="unnar@kth.se">unnar</maintainer>
