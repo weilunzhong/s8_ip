@@ -112,7 +112,8 @@ public:
     double max = 0.0;
     cv::minMaxLoc(cv_depth_ptr->image, 0, &max, 0, 0);
     cv::Mat Depth;
-    cv_depth_ptr->image.convertTo(Depth, CV_32FC1, 1.0/max, 0); 
+    Depth = cv_depth_ptr->image;
+    Depth.convertTo(Depth, CV_32FC1, 1.0/max, 0); 
     medianBlur( Depth, Depth, 5 );
     GaussianBlur( Depth, Depth, Size(9, 9), 2, 2 );
     *normalizedDepth = Depth;
@@ -164,6 +165,8 @@ public:
     findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
 
     Mat imageROI;
+    Mat channel;
+    Mat contourRegion;
     if (contours.size() > 0)
     {
       // Find contour with biggest area
@@ -187,23 +190,30 @@ public:
       // At this point, mask has value of 255 for pixels within the contour and value of 0 for those not in contour.
 
       // Extract region using mask for region
-      Mat contourRegion;
-      HSVImage.copyTo(imageROI, mask); // 'image' is the image you used to compute the contours.
+      (cv_depth_ptr->image).copyTo(imageROI, mask); // 'image' is the image you used to compute the contours.
       contourRegion = imageROI(roi);
       // Mat maskROI = mask(roi); // Save this if you want a mask for pixels within the contour in contourRegion. 
 
       // Store contourRegion. contourRegion is a rectangular image the size of the bounding rect for the contour 
       // BUT only pixels within the contour is visible. All other pixels are set to (0,0,0).
-      Mat subregions;
-      subregions.push_back(contourRegion);
+      //Mat subregions;
+      //subregions.push_back(contourRegion);
+
+      
+      double max = 0.0;
+      double min = 0.0;
+      channel = Mat::zeros(HSVImage.size(), CV_8UC1);
+      cv::minMaxLoc(imageROI, &min, &max, 0, 0);
+      imageROI.convertTo(imageROI,CV_8U,255.0/(max-min),0);
     }
     else
     {
       imageROI = Mat::zeros(HSVImage.size(), CV_8UC1);
+      contourRegion = Mat::zeros(HSVImage.size(), CV_8UC1);
     }
 
-    cv::imshow(OPENCV_WINDOW, cv_ptr->image);
-    cv::imshow(OPENCV_WINDOW_DEPTH, normalizedDepth);
+    cv::imshow(OPENCV_WINDOW, contourRegion);
+    cv::imshow(OPENCV_WINDOW_DEPTH, cv_depth_ptr->image);
     cv::imshow(OPENCV_WINDOW_GRAY, imageROI);
   }
 };
