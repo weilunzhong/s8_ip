@@ -12,3 +12,6 @@ include_directories(${catkin_INCLUDE_DIRS})
 
 add_executable(imageConverter src/image_converter.cpp)
 target_link_libraries(imageConverter ${catkin_LIBRARIES})
+
+add_executable(objectTracker src/object_tracker.cpp)
+target_link_libraries(objectTracker ${catkin_LIBRARIES})
