@@ -142,15 +142,23 @@ public:
 		// Convert from BRG to HSV and use gaussian blur.
 		colorPreProcess(&HSVImage, &grayScaleImage);
 		// Only allow color in range that should be skin
-		inRange(normalizedDepth, 0.1, 0.5, normalizedDepth);
-		normalizedDepth = ~normalizedDepth;
-		grayScaleImage = grayScaleImage - normalizedDepth;
-
+		inRange(normalizedDepth, 0.1, 0.3, normalizedDepth);
+		Mat maskedGrayScale;
+		Mat realGrayScale;
+		cvtColor(HSVImage, realGrayScale, COLOR_BGR2GRAY);
+	
+		
+		//normalizedDepth = ~normalizedDepth;
+		//grayScaleImage = grayScaleImage - normalizedDepth;
+		
+		
 		//morphological opening (removes small objects from the foreground)
 		erode(grayScaleImage, grayScaleImage, getStructuringElement(MORPH_ELLIPSE, Size((iErode+1)/2, (iErode+1)/2)) );
 		dilate( grayScaleImage, grayScaleImage, getStructuringElement(MORPH_ELLIPSE, Size(iErode+1, iErode+1)) );
 		erode(grayScaleImage, grayScaleImage, getStructuringElement(MORPH_ELLIPSE, Size((iErode+1)/2, (iErode+1)/2)) );
-
+		cv::imshow(OPENCV_WINDOW_DEPTH, grayScaleImage);
+		grayScaleImage.copyTo(maskedGrayScale, normalizedDepth);
+/*
 		Mat canny_output;
 		vector<vector<Point> > contours;
 		vector<Vec4i> hierarchy;
@@ -216,10 +224,10 @@ public:
 		  imageROI = Mat::zeros(HSVImage.size(), CV_8UC1);
 		  contourRegion = Mat::zeros(HSVImage.size(), CV_8UC1);
 		}
-
-		cv::imshow(OPENCV_WINDOW, contourRegion);
-		cv::imshow(OPENCV_WINDOW_DEPTH, cv_depth_ptr->image);
-		cv::imshow(OPENCV_WINDOW_GRAY, imageROI);
+		*/
+		cv::imshow(OPENCV_WINDOW, HSVImage);
+		
+		cv::imshow(OPENCV_WINDOW_GRAY, normalizedDepth);
 	}
 };
 
