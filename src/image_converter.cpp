@@ -26,6 +26,7 @@ class ImageConverter
 	image_transport::Subscriber image_depth_sub_;
 	image_transport::Publisher image_pub_;
 	int iLowH, iHighH, iLowS, iHighS, iLowV, iHighV, iErode;
+	int maxDist;
 	bool isInitializedDepth, isInitializedColor;
 	cv_bridge::CvImagePtr cv_depth_ptr;
 	cv_bridge::CvImagePtr cv_ptr;
@@ -47,6 +48,7 @@ public:
 		iLowV = 36;
 		iHighV = 255;
 		iErode = 15;
+		maxDist = 3;
 		isInitializedDepth = false;
 		isInitializedColor = false;
 
@@ -65,6 +67,7 @@ public:
 		cvCreateTrackbar("LowV", OPENCV_WINDOW_CONTROL.c_str(), &iLowV, 255); //Value (0 - 255)
 		cvCreateTrackbar("HighV", OPENCV_WINDOW_CONTROL.c_str(), &iHighV, 255);
 		cvCreateTrackbar("Erode", OPENCV_WINDOW_CONTROL.c_str(), &iErode, 29); //Value (0 - 20)
+		cvCreateTrackbar("maxDist", OPENCV_WINDOW_CONTROL.c_str(), &maxDist, 10); //Value (0 - 20)
 	}
 
 	~ImageConverter()
@@ -112,7 +115,7 @@ public:
 		cv::Mat Depth;
 		Depth = cv_depth_ptr->image;
 		Depth.convertTo(Depth, CV_32FC1, 1.0/max, 0); 
-		medianBlur( Depth, Depth, 5 );
+		//medianBlur( Depth, Depth, 5 );
 		GaussianBlur( Depth, Depth, Size(9, 9), 2, 2 );
 		*normalizedDepth = Depth;
 	}
@@ -144,20 +147,24 @@ public:
 		// Only allow color in range that should be skin
 		inRange(normalizedDepth, 0.1, 0.3, normalizedDepth);
 		Mat maskedGrayScale;
-		Mat realGrayScale;
-		cvtColor(HSVImage, realGrayScale, COLOR_BGR2GRAY);
 	
-		
+		Mat mask = Mat::zeros(HSVImage.size(), CV_8U);
+		mask(Rect(0,200,640,280))=255;
+		grayScaleImage.copyTo(maskedGrayScale, mask);
 		//normalizedDepth = ~normalizedDepth;
 		//grayScaleImage = grayScaleImage - normalizedDepth;
 		
 		
 		//morphological opening (removes small objects from the foreground)
+		/*
 		erode(grayScaleImage, grayScaleImage, getStructuringElement(MORPH_ELLIPSE, Size((iErode+1)/2, (iErode+1)/2)) );
 		dilate( grayScaleImage, grayScaleImage, getStructuringElement(MORPH_ELLIPSE, Size(iErode+1, iErode+1)) );
 		erode(grayScaleImage, grayScaleImage, getStructuringElement(MORPH_ELLIPSE, Size((iErode+1)/2, (iErode+1)/2)) );
-		cv::imshow(OPENCV_WINDOW_DEPTH, grayScaleImage);
 		grayScaleImage.copyTo(maskedGrayScale, normalizedDepth);
+		*/
+		cv::imshow(OPENCV_WINDOW, mask);
+		cv::imshow(OPENCV_WINDOW_DEPTH, maskedGrayScale);
+		cv::imshow(OPENCV_WINDOW_GRAY, normalizedDepth);
 /*
 		Mat canny_output;
 		vector<vector<Point> > contours;
@@ -225,9 +232,6 @@ public:
 		  contourRegion = Mat::zeros(HSVImage.size(), CV_8UC1);
 		}
 		*/
-		cv::imshow(OPENCV_WINDOW, HSVImage);
-		
-		cv::imshow(OPENCV_WINDOW_GRAY, normalizedDepth);
 	}
 };
 
