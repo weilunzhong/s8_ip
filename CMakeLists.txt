@@ -6,9 +6,21 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	std_msgs
 	image_transport
+	message_generation
 )
-catkin_package()
+
+add_message_files(FILES
+	distPose.msg
+)
+
+generate_messages(DEPENDENCIES
+	std_msgs
+)
+
+catkin_package(CATKIN_DEPENDS message_runtime
+)
 include_directories(${catkin_INCLUDE_DIRS})
+
 
 add_executable(imageConverter src/image_converter.cpp)
 target_link_libraries(imageConverter ${catkin_LIBRARIES})

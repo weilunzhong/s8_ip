@@ -6,6 +6,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <message_filters/synchronizer.h>
+#include <s8_ip/distPose.h>
 #include <signal.h>
 
 using namespace cv;
@@ -23,7 +24,7 @@ class ObjectTracker
 	image_transport::ImageTransport it_;
 	image_transport::Subscriber image_sub_;
 	image_transport::Subscriber image_depth_sub_;
-	image_transport::Publisher image_pub_;
+	ros::Publisher distPose_pub_;
 	int iLowH, iHighH, iLowS, iHighS, iLowV, iHighV, iErode, StepSize;
 	bool isInitializedDepth, isInitializedColor;
 	cv_bridge::CvImagePtr cv_depth_ptr;
@@ -38,7 +39,7 @@ public:
 		  &ObjectTracker::imageColorCb, this);
 		image_depth_sub_ = it_.subscribe("/camera/depth/image_raw", 1, 
 		  &ObjectTracker::imageDepthCb, this);
-		image_pub_ = it_.advertise("/image_converter/output_video", 1);
+		distPose_pub_ = nh_.advertise<s8_ip::distPose>("/s8_ip/distPose", 1);
 		isInitializedDepth = false;
 		isInitializedColor = false;
 		iErode = 15;
@@ -125,6 +126,7 @@ public:
 		Mat threshDept;
 		double occupancy;
 		int i = 10;
+		int distance = 0;
 
 		// Find the object that lies closest to the camera.
 		while (i < 3000)
@@ -134,6 +136,7 @@ public:
 			occupancy = sum(threshDept)[0]/(640*480);
 			if(occupancy > 2){
 				cout << i << " - " << i+StepSize << endl;
+				distance = i;
 				break;	
 			} 
 			i = i+StepSize;
@@ -149,6 +152,13 @@ public:
 		// Show the image
 		cv::imshow(OPENCV_WINDOW, HSVImage);
 		cv::imshow(OPENCV_WINDOW_DEPTH, threshDept);
+
+		s8_ip::distPose msg;
+
+		double pose = ((double)p1.x - 320.0)/320.0*57.5;
+		msg.dist = distance;
+		msg.pose = (int)pose;
+		distPose_pub_.publish(msg);
 	}
 };
 
